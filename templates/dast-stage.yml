@@ -1,0 +1,27 @@
+### ALL THE VARIABLES CAN BE OVERRITEN IN PROJECTS THAT USE THIS SHARED LIBRARY
+
+variables:
+
+### OWASP ZAP VARIABLES (see https://owasp.org/www-project-zap/)
+  ### WEBSITE TO ANALYZE URL
+  WEBSITE: "https://mywebsite.flx.thalesdigital.io"
+  ### LOGIN PAGE URL, TO ACCESS WEBSITE TO ANALYZE
+  LOGIN_URL: "https://auth.mywebsite.flx.thalesdigital.io"
+  ### USERNAME TO LOG INTO WEBSITE - YOU HAVE TO SET IT AS ENV VARIABLE IN GITLAB
+  USERNAME: "$OWASP_USER"
+  ### PASSWORD TO LOG INTO WEBSITE - YOU HAVE TO SET IT AS ENV VARIABLE IN GITLAB
+  PASSWORD: "$OWASP_PASS"
+
+# STAGE DEFINITION
+stages:
+  - dast
+
+# OWASP ZAP STAGE
+dast:
+  stage: dast
+  allow_failure: true
+  script:
+    - docker run --rm -v $CI_PROJECT_DIR:/zap/wrk registry.gitlab.com/gitlab-org/security-products/zaproxy /zap/zap-baseline.py -t $WEBSITE --auth-url $LOGIN_URL --auth-username $USERNAME --auth-password $PASSWORD -r dast-report.html || true
+  artifacts:
+    paths:
+      - dast-report.html

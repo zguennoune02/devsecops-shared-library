@@ -1,0 +1,29 @@
+### ALL THE VARIABLES CAN BE OVERRITEN IN PROJECTS THAT USE THIS SHARED LIBRARY
+
+variables:
+
+### ANCHORE VARIABLES (see https://anchore.com/)
+  ANALYZED_DOCKER_IMAGE: "my-dockerized-app:my-version"
+
+# STAGE DEFINITION
+stages:
+  - anchore
+
+# ANCHORE STAGE
+anchore:
+  stage: anchore
+  script:
+    - docker run -d -v /var/run/docker.sock:/var/run/docker.sock --name anchore devsecopsat/anchore-cli:latest
+    - docker pull $ANALYZED_DOCKER_IMAGE
+    - docker exec anchore anchore feeds sync >> reports/anchore.log
+    - docker exec anchore anchore analyze --image $ANALYZED_DOCKER_IMAGE --imagetype base >> anchore.log
+    - docker exec anchore anchore audit --image $ANALYZED_DOCKER_IMAGE report >> anchore.log
+    - docker exec anchore anchore query --image $ANALYZED_DOCKER_IMAGE has-package curl wget >> anchore.log
+    - docker exec anchore anchore query --image $ANALYZED_DOCKER_IMAGE list-files-detail all >> anchore.log
+    - docker exec anchore anchore query --image $ANALYZED_DOCKER_IMAGE cve-scan all >> anchore.log
+    - docker exec anchore anchore toolbox --image $ANALYZED_DOCKER_IMAGE show >> anchore.log
+    - docker stop anchore
+    - docker rm anchore
+  artifacts:
+    paths:
+      - anchore.log

@@ -1,0 +1,19 @@
+### ALL THE VARIABLES CAN BE OVERRITEN IN PROJECTS THAT USE THIS SHARED LIBRARY
+
+variables:
+
+### FFUF VARIABLES
+  WEBSITE: "https://mywebsite.com"
+
+# STAGE DEFINITION
+stages:
+  - ffuf
+
+# FFUF STAGE
+ffuf:
+  stage: ffuf
+  script:
+    - docker run --rm -v $CI_PROJECT_DIR:/data artifactory.flx.thalesdigital.io/flxdp-docker/ffuf:1.0.0 "./ffuf -u $WEBSITE/FUZZ -w dicc.txt -r -fc 403 -o /data/ffuf-report.html -of html"
+  artifacts:
+    paths:
+      - ffuf-report.html

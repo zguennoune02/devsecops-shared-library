@@ -1,0 +1,23 @@
+### ALL THE VARIABLES CAN BE OVERRITEN IN PROJECTS THAT USE THIS SHARED LIBRARY
+
+variables:
+
+### SQLMAP VARIABLES
+  ### Main page URL or URL with parameters
+  TARGET: "https://mywebsite.com/page=1"
+
+# STAGE DEFINITION
+stages:
+  - sqlmap
+
+# SQLMAP STAGE
+sqlmap:
+  stage: sqlmap
+  script:
+    - mkdir sqlmap-report
+    - docker run --rm -u $(id -u):$(id -g) -v $CI_PROJECT_DIR:/data artifactory.flx.thalesdigital.io/flxdp-docker/sqlmap:1.0.0 "python3 sqlmap.py -u '$TARGET' --crawl=3 --crawl-exclude=logout --batch --output-dir=/data/sqlmap-report"
+    - find sqlmap-report -name "*.csv" -print0 | xargs -0 -I {} mv {} sqlmap-report.csv
+    # regex : ^results-[0-9]{8}_[0-9]{4}(am|pm).csv$
+  artifacts:
+    paths:
+      - sqlmap-report.csv

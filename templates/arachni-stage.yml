@@ -1,0 +1,22 @@
+### ALL THE VARIABLES CAN BE OVERRITEN IN PROJECTS THAT USE THIS SHARED LIBRARY
+
+variables:
+
+### ARACHNI VARIABLES
+  WEBSITE: "https://mywebsite.com"
+
+# STAGE DEFINITION
+stages:
+  - arachni
+
+# ARACHNI STAGE
+arachni:
+  stage: arachni
+  script:
+    - docker run --rm -v $CI_PROJECT_DIR:/data artifactory.flx.thalesdigital.io/flxdp-docker/arachni:1.0.0 \
+        "bin/arachni --checks=active/* --output-verbose --scope-include-subdomains $WEBSITE --report-save-path=/data/arachni-report.afr > '/data/arachni-report.txt' \
+        && bin/arachni_reporter /data/arachni-report.afr --reporter=html:outfile=/data/arachni-report.html.zip"
+  artifacts:
+    paths:
+      - arachni-report.txt
+      - arachni-report.html.zip

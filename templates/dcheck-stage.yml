@@ -1,0 +1,23 @@
+### ALL THE VARIABLES CAN BE OVERRITEN IN PROJECTS THAT USE THIS SHARED LIBRARY
+
+variables:
+
+# SECURITY TOOLS VARIABLES
+
+### DEPENDENCY CHECK VARIABLES (see https://owasp.org/www-project-dependency-check/)
+  ### PROJECT SOURCES FOLDER
+  PROJECT_SOURCES_FOLDER: "relative/path/to/sources/files/from/CI_PROJECT_DIR"
+
+# STAGE DEFINITION
+stages:
+  - dcheck
+
+# DEPENDENCY CHECK STAGE
+dependency-check:
+  stage: dcheck
+  script:
+    - mkdir dependency-check-report
+    - docker run --rm -v $CI_PROJECT_DIR:/data artifactory.flx.thalesdigital.io/flxdp-docker/dcheck:1.0.0 "sh dependency-check/bin/dependency-check.sh --failOnCVSS 3 --enableExperimental --project $CI_PROJECT_NAME -s /data/$PROJECT_SOURCES_FOLDER -o /data/dependency-check-report -format HTML"
+  artifacts:
+    paths:
+      - dependency-check-report

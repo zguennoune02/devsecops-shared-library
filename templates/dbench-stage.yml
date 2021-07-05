@@ -1,0 +1,22 @@
+### ALL THE VARIABLES CAN BE OVERRITEN IN PROJECTS THAT USE THIS SHARED LIBRARY
+
+variables:
+  
+# SECURITY TOOLS VARIABLES
+  
+### DOCKER BENCH VARIABLES (see https://github.com/docker/docker-bench-security)
+  CUSTOM_DOCKER_NETWORK: "custom-host"
+
+# STAGES DEFINITION
+stages:
+  - dbench
+
+# DOCKER BENCH STAGE
+bench:
+  stage: dbench
+  script:
+    - docker run --rm --net $CUSTOM_DOCKER_NETWORK --pid host --cap-add audit_control -e DOCKER_CONTENT_TRUST=$DOCKER_CONTENT_TRUST -v /var/lib:/var/lib -v /var/run/docker.sock:/var/run/docker.sock -v /etc:/etc --label docker_bench_security docker/docker-bench-security > docker_bench.log
+  artifacts:
+    paths:
+      - docker_bench.log
+

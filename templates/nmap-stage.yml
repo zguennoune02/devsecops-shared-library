@@ -1,0 +1,19 @@
+### ALL THE VARIABLES CAN BE OVERRITEN IN PROJECTS THAT USE THIS SHARED LIBRARY
+
+variables:
+
+### NMAP VARIABLES
+  DOMAIN: "mywebsite.com"
+
+# STAGE DEFINITION
+stages:
+  - nmap
+
+# NMAP STAGE
+nmap:
+  stage: nmap
+  script:
+    - docker run --rm -v $CI_PROJECT_DIR:/data artifactory.flx.thalesdigital.io/flxdp-docker/nmap:1.0.0 "nmap $DOMAIN -p- -Pn -sTV > /data/nmap-report.txt"
+  artifacts:
+    paths:
+      - nmap-report.txt

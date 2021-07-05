@@ -1,0 +1,178 @@
+include:
+  - project: 'shared-assets/shared-library'
+    ref: master
+    file: '/templates/dast-stage.yml'
+
+  - project: 'shared-assets/shared-library'
+    ref: master
+    file: '/templates/anchore-stage.yml'
+
+  - project: 'shared-assets/shared-library'
+    ref: master
+    file: '/templates/dcheck-stage.yml'
+
+  - project: 'shared-assets/shared-library'
+    ref: master
+    file: '/templates/dbench-stage.yml'
+
+  - project: 'shared-assets/shared-library'
+    ref: master
+    file: '/templates/ffuf-stage.yml'
+
+  - project: 'shared-assets/shared-library'
+    ref: master
+    file: '/templates/nmap-stage.yml'
+
+  - project: 'shared-assets/shared-library'
+    ref: master
+    file: '/templates/sqlmap-stage.yml'
+
+  - project: 'shared-assets/shared-library'
+    ref: master
+    file: '/templates/sslyze-stage.yml'
+
+  - project: 'shared-assets/shared-library'
+    ref: master
+    file: '/templates/arachni-stage.yml'
+
+variables:
+
+# BUILD AND DEPLOY VARIABLES
+
+### DOCKER REGISTRY VARIABLES
+  ### DOCKER REGISTRY DOMAIN, TO STORE BUILD DOCKER IMAGE (default: artifactory.flx.thalesdigital.io)
+  DOCKER_REGISTRY: "artifactory.flx.thalesdigital.io"
+  ### USERNAME TO LOG INTO DOCKER REGISTRY- YOU HAVE TO SET IT AS ENV VARIABLE IN GITLAB
+  DOCKER_REGISTRY_USER: "$DOCKER_REGISTRY_USERNAME"
+  ### PASSWORD TO LOG INTO DOCKER REGISTRY - YOU HAVE TO SET IT AS ENV VARIABLE IN GITLAB
+  DOCKER_REGISTRY_PASS: "$DOCKER_REGISTRY_PASSWORD"
+
+# SECURITY TOOLS VARIABLES
+
+### DEPENDENCY CHECK VARIABLES (see https://owasp.org/www-project-dependency-check/) (default is "src")
+  ### PROJECT SOURCES FOLDER
+  PROJECT_SOURCES_FOLDER: "src"
+
+### DOCKER BENCH VARIABLES (see https://github.com/docker/docker-bench-security) (default is "custom-host")
+  CUSTOM_DOCKER_NETWORK: "custom-host"
+
+### ANCHORE VARIABLES (see https://anchore.com/)
+  ANALYZED_DOCKER_IMAGE: "myapplication:myversion"
+
+### DAST VARIABLES (for OWASP ZAP, FFUF and ARACHNI)
+  ### WEBSITE TO ANALYZE URL
+  WEBSITE: "$WEBSITE_URL"
+  ### LOGIN PAGE URL, TO ACCESS WEBSITE TO ANALYZE
+  LOGIN_URL: "$WEBSITE_LOGIN_URL"
+  ### USERNAME TO LOG INTO WEBSITE - YOU HAVE TO SET IT AS ENV VARIABLE IN GITLAB
+  USERNAME: "$OWASP_USERNAME"
+  ### PASSWORD TO LOG INTO WEBSITE - YOU HAVE TO SET IT AS ENV VARIABLE IN GITLAB
+  PASSWORD: "$OWASP_PASSWORD"
+
+### NMAP VARIABLES
+  DOMAIN: "$DOMAIN"
+
+### SQLMAP VARIABLES
+  ### PAGE URL WITH PARAMETERS
+  TARGET: "$WEBSITE_LOGIN_URL"
+
+### SSLYZE VARIABLES
+  HOST: "$DOMAIN"
+
+# STAGES DEFINITION
+stages:
+  - up
+  - dast
+  - anchore
+  - dcheck
+  - dbench
+  - ffuf
+  - nmap
+  - sqlmap
+  - sslyze
+  - arachni
+  - clean
+
+before_script:
+  - mkdir reports
+
+ # RUN DOCKER
+docker-compose-up:
+  image: docker/compose
+  stage: up
+  allow_failure: true
+  script:
+    - docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PASS $DOCKER_REGISTRY
+    - docker ps -a -q | xargs docker rm -fv
+    - docker-compose up -d
+  tags:
+    - oflxrun-s01
+
+# DEVSECOPS INIT
+devsecops-init:
+  stage: devsecops-init
+  tags:
+    - oflxrun-s01
+
+# DAST STAGE
+dast:
+  stage: dast
+  tags:
+    - oflxrun-s01-docker
+
+# ANCHORE STAGE
+anchore:
+  stage: anchore
+  tags:
+    - oflxrun-s01
+
+# DEPENDENCY CHECK STAGE
+dependency-check:
+  stage: dcheck
+  tags:
+    - oflxrun-s01-docker
+
+# DOCKER BENCH STAGE
+bench:
+  stage: dbench
+  tags:
+    - oflxrun-s01
+
+# FFUF STAGE
+ffuf:
+  stage: ffuf
+  tags:
+    - oflxrun-s01
+
+# NMAP STAGE
+nmap:
+  stage: nmap
+  tags:
+    - oflxrun-s01
+
+# SQLMAP STAGE
+sqlmap:
+  stage: sqlmap
+  tags:
+    - oflxrun-s01
+
+# SSLYZE STAGE
+sslyze:
+  stage: sslyze
+  tags:
+    - oflxrun-s01
+
+# ARACHNI STAGE
+arachni:
+  stage: arachni
+  tags:
+    - oflxrun-s01
+
+# CLEANUP STAGE
+cleanup:
+  image: docker/compose
+  stage: clean
+  script:
+    - docker ps -a -q | xargs docker rm -fv
+  tags:
+    - oflxrun-s01
